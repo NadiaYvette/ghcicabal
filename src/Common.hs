@@ -5,6 +5,7 @@ import Control.Monad (foldM,liftM2)
 import Data.List (intersperse,isSuffixOf)
 import Distribution.PackageDescription.Parsec
 import Distribution.Pretty
+import Distribution.Simple.PackageDescription (readGenericPackageDescription)
 import Distribution.Types.BuildInfo
 import Distribution.Types.CondTree
 import Distribution.Types.Executable
@@ -12,6 +13,7 @@ import Distribution.Types.ForeignLib
 import Distribution.Types.GenericPackageDescription
 import Distribution.Types.Library
 import Distribution.Types.TestSuite
+import Distribution.Utils.Path (getSymbolicPath)
 import Distribution.Verbosity
 import GHC.Generics(Generic)
 import Language.Haskell.Extension
@@ -85,7 +87,9 @@ instance Monoid Info where
 -- | Creates an 'Info' from a 'BuildInfo'.
 
 mkInfo ∷ FilePath -> BuildInfo -> Info
-mkInfo f BuildInfo{..} = Info (S.fromList $ defaultExtensions ++ otherExtensions) (S.fromList . map (dropFileName f </>) $ "./" : hsSourceDirs)
+mkInfo (takeDirectory -> baseDir) BuildInfo{..} = Info{..} where
+  iExts = S.fromList $ defaultExtensions ++ otherExtensions
+  iPaths = S.fromList $ baseDir : [baseDir </> getSymbolicPath d | d <- hsSourceDirs]
 
 
 -- | Given a filepath and a package description, return the 'Info'.
