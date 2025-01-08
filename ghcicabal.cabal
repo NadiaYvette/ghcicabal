@@ -26,7 +26,7 @@ Extra-Source-Files:
 
 common deps
   build-depends: base                   >= 4.7
-               , Cabal                  >= 2.4
+               , Cabal                  >= 3.8
                , containers             >= 0.6
                , filemanip              >= 0.3
                , filepath               >= 1.4
