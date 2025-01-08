@@ -1,7 +1,7 @@
 
 module Common where
 
-import Control.Monad (foldM,liftM2)
+import Control.Monad (foldM, forM, liftM2)
 import Data.List (intersperse,isSuffixOf)
 import Distribution.PackageDescription.Parsec
 import Distribution.Pretty
@@ -13,7 +13,7 @@ import Distribution.Types.ForeignLib
 import Distribution.Types.GenericPackageDescription
 import Distribution.Types.Library
 import Distribution.Types.TestSuite
-import Distribution.Utils.Path (getSymbolicPath)
+import Distribution.Utils.Path (interpretSymbolicPathCWD, makeSymbolicPath)
 import Distribution.Verbosity
 import GHC.Generics(Generic)
 import Language.Haskell.Extension
@@ -87,9 +87,9 @@ instance Monoid Info where
 -- | Creates an 'Info' from a 'BuildInfo'.
 
 mkInfo ∷ FilePath -> BuildInfo -> Info
-mkInfo (takeDirectory -> baseDir) BuildInfo{..} = Info {..} where
+mkInfo (takeDirectory -> baseDir) BuildInfo{..} = Info{..} where
   iExts = S.fromList $ defaultExtensions ++ otherExtensions
-  iPaths = S.fromList $ baseDir : [baseDir </> getSymbolicPath d | d <- hsSourceDirs]
+  iPaths = S.fromList $ baseDir : [baseDir </> interpretSymbolicPathCWD d | d <- hsSourceDirs]
 
 
 -- | Given a filepath and a package description, return the 'Info'.
@@ -123,7 +123,7 @@ runMain exe pfp = do
   let ds = if null oRootDirs then ["./", "deps"] else oRootDirs
   -- cabal related
   cs <- concat <$> mapM (F.find (dirCheck oIgnoreDirs &&? depth <=? oMaxParseDepth) (extension ==? ".cabal")) ds
-  ps <- mapM (readGenericPackageDescription silent) $ cs
+  ps <- forM cs $ readGenericPackageDescription silent Nothing . makeSymbolicPath
   let z = mconcat $ zipWith extensions cs ps
   -- hpack related
   ys <- concat <$> mapM (F.find (dirCheck oIgnoreDirs &&? depth <=? oMaxParseDepth) (fileName ==? "package.yaml")) ds

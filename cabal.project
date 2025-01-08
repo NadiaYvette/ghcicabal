@@ -1,0 +1,2 @@
+packages: ghcicabal.cabal
+allow-newer: Cabal, Cabal-syntax
